@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Newsroom Editor Suite</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem;
+      --color-bg: #f7f6f2; --color-surface: #f9f8f5; --color-surface-2: #fbfbf9; --color-surface-offset: #f3f0ec; --color-surface-offset-2: #edeae5; --color-surface-dynamic: #e6e4df;
+      --color-divider: #dcd9d5; --color-border: #d4d1ca; --color-text: #28251d; --color-text-muted: #6e6c67; --color-text-faint: #a7a59e; --color-text-inverse: #f9f8f4;
+      --color-primary: #01696f; --color-primary-hover: #0c4e54; --color-primary-highlight: #cedcd8; --color-warning: #964219; --color-error: #a12c7b; --color-success: #437a22; --color-blue: #006494; --color-gold:#b07a00;
+      --radius-sm: .375rem; --radius-md: .5rem; --radius-lg: .75rem; --radius-xl: 1rem; --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px rgba(40,37,29,.06); --shadow-md: 0 4px 12px rgba(40,37,29,.08); --shadow-lg: 0 12px 32px rgba(40,37,29,.12);
+      --font-body: 'Satoshi', Inter, sans-serif;
+    }
+    [data-theme="dark"] {
+      --color-bg: #171614; --color-surface: #1c1b19; --color-surface-2: #201f1d; --color-surface-offset: #1d1c1a; --color-surface-offset-2: #22211f; --color-surface-dynamic: #2d2c2a;
+      --color-divider: #262523; --color-border: #393836; --color-text: #cdccca; --color-text-muted: #96948f; --color-text-faint: #676561; --color-text-inverse: #2b2a28;
+      --color-primary: #4f98a3; --color-primary-hover: #227f8b; --color-primary-highlight: #313b3b; --color-warning: #bb653b; --color-error: #d163a7; --color-success: #6daa45; --color-blue: #5591c7; --color-gold:#e8af34;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.2); --shadow-md: 0 4px 12px rgba(0,0,0,.3); --shadow-lg: 0 12px 32px rgba(0,0,0,.4);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { min-height: 100dvh; line-height: 1.5; font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text); background: var(--color-bg); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    textarea { resize: vertical; min-height: 82px; }
+    .app { display: grid; grid-template-columns: 276px minmax(0,1fr) 380px; grid-template-rows: 72px 1fr 40px; height: 100dvh; }
+    .sidebar { grid-row: 1 / -1; background: var(--color-surface); border-right: 1px solid var(--color-border); overflow-y: auto; padding: var(--space-5); }
+    .topbar { grid-column: 2 / 4; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-4) var(--space-5); background: color-mix(in oklab, var(--color-surface) 88%, transparent); border-bottom: 1px solid var(--color-border); position: sticky; top: 0; z-index: 20; backdrop-filter: blur(14px); }
+    .main { grid-column: 2; overflow-y: auto; padding: var(--space-5); }
+    .rightbar { grid-column: 3; grid-row: 2; border-left: 1px solid var(--color-border); background: var(--color-surface); overflow-y: auto; padding: var(--space-5); }
+    .statusbar { grid-column: 2 / 4; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: 0 var(--space-5); border-top: 1px solid var(--color-border); background: var(--color-surface-2); font-size: var(--text-xs); color: var(--color-text-muted); }
+    .logo { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-8); }
+    .logo svg { width: 28px; height: 28px; color: var(--color-primary); }
+    .logo strong { font-size: var(--text-sm); letter-spacing: .04em; text-transform: uppercase; }
+    .nav-group { margin-bottom: var(--space-8); }
+    .nav-title { font-size: var(--text-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: var(--space-3); }
+    .nav-item, .saved-view { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: .8rem .9rem; border-radius: var(--radius-md); color: var(--color-text); margin-bottom: .35rem; }
+    .nav-item.active, .saved-view.active { background: var(--color-primary-highlight); color: var(--color-primary-hover); }
+    .nav-item:hover, .saved-view:hover { background: var(--color-surface-offset); }
+    .pill { display: inline-flex; align-items: center; gap: .35rem; padding: .22rem .6rem; border-radius: var(--radius-full); font-size: var(--text-xs); background: var(--color-surface-offset-2); color: var(--color-text-muted); }
+    .search { flex: 1; max-width: 460px; position: relative; }
+    .search input { width: 100%; height: 44px; border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: var(--color-surface-2); padding: 0 1rem 0 2.6rem; }
+    .search svg { position: absolute; top: 12px; left: 12px; width: 20px; height: 20px; color: var(--color-text-muted); }
+    .top-actions { display: flex; align-items: center; gap: .75rem; }
+    .icon-btn, .theme-btn { width: 40px; height: 40px; border-radius: 999px; background: var(--color-surface-2); border: 1px solid var(--color-border); display: inline-flex; align-items: center; justify-content: center; }
+    .hero { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-6); margin-bottom: var(--space-5); }
+    .hero h1 { font-size: var(--text-xl); line-height: 1.12; margin-bottom: .4rem; }
+    .hero p { color: var(--color-text-muted); max-width: 65ch; }
+    .hero-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+    .btn { height: 42px; padding: 0 1rem; border-radius: var(--radius-lg); display: inline-flex; align-items: center; gap: .5rem; border: 1px solid transparent; font-size: var(--text-sm); }
+    .btn-primary { background: var(--color-primary); color: var(--color-text-inverse); }
+    .btn-secondary { background: var(--color-surface-2); border-color: var(--color-border); }
+    .btn-success { background: var(--color-success); color: var(--color-text-inverse); }
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: var(--space-4); margin-bottom: var(--space-5); }
+    .card { background: var(--color-surface); border: 1px solid color-mix(in oklab, var(--color-text) 12%, transparent); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); }
+    .kpi { padding: var(--space-4); }
+    .kpi .label { font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: .4rem; text-transform: uppercase; letter-spacing: .06em; }
+    .kpi .value { font-size: var(--text-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .kpi .meta { margin-top: .3rem; color: var(--color-text-muted); font-size: var(--text-sm); }
+    .workspace { display: grid; grid-template-columns: minmax(0,1.08fr) minmax(0,.92fr); gap: var(--space-5); }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-4) var(--space-3); border-bottom: 1px solid var(--color-divider); }
+    .panel-title { font-size: var(--text-lg); }
+    .subtle { color: var(--color-text-muted); font-size: var(--text-sm); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+    th, td { text-align: left; padding: .9rem 1rem; border-bottom: 1px solid var(--color-divider); white-space: nowrap; }
+    th { position: sticky; top: 0; background: var(--color-surface); z-index: 1; font-size: var(--text-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .06em; }
+    tr:hover td { background: color-mix(in oklab, var(--color-primary-highlight) 42%, var(--color-surface)); }
+    tr.row-done td { background: color-mix(in oklab, var(--color-success) 12%, var(--color-surface)); }
+    tr.row-done:hover td { background: color-mix(in oklab, var(--color-success) 18%, var(--color-surface)); }
+    .status { padding: .22rem .55rem; border-radius: var(--radius-full); font-size: var(--text-xs); }
+    .status.warning { background: color-mix(in oklab, var(--color-warning) 14%, var(--color-surface)); color: var(--color-warning); }
+    .status.success { background: color-mix(in oklab, var(--color-success) 16%, var(--color-surface)); color: var(--color-success); }
+    .status.review { background: color-mix(in oklab, var(--color-blue) 16%, var(--color-surface)); color: var(--color-blue); }
+    .status.draft { background: var(--color-surface-offset); color: var(--color-text-muted); }
+    .status.done { background: color-mix(in oklab, var(--color-success) 20%, var(--color-surface)); color: var(--color-success); }
+    .mark-done { display:inline-flex; align-items:center; gap:.35rem; padding:.42rem .7rem; border-radius:var(--radius-md); background:color-mix(in oklab, var(--color-success) 12%, var(--color-surface)); border:1px solid color-mix(in oklab, var(--color-success) 28%, var(--color-border)); font-size:var(--text-xs); color:var(--color-success); }
+    .editor-card { display: grid; grid-template-rows: auto auto 1fr auto; min-height: 860px; }
+    .doc-meta { display: flex; flex-wrap: wrap; gap: .6rem; padding: var(--space-4); border-bottom: 1px solid var(--color-divider); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: .5rem; padding: .8rem var(--space-4); border-bottom: 1px solid var(--color-divider); position: sticky; top: 0; background: var(--color-surface); z-index: 4; }
+    .tool { padding: .45rem .75rem; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); font-size: var(--text-sm); }
+    .tool.active { background: var(--color-primary-highlight); color: var(--color-primary-hover); border-color: color-mix(in oklab, var(--color-primary) 35%, var(--color-border)); }
+    .editor { padding: var(--space-5); display: grid; gap: var(--space-4); align-content: start; }
+    .field-label { font-size: var(--text-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .07em; }
+    .headline, .lead, .paragraph, .fact-block, .quote-block, .note-block, .source-block, .topic-comments, .export-panel {
+      border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: var(--color-surface-2); padding: 1rem 1rem;
+    }
+    .headline { font-size: 1.45rem; font-weight: 700; line-height: 1.2; }
+    .lead { color: var(--color-text-muted); font-size: 1.03rem; }
+    .selected { background: color-mix(in oklab, var(--color-primary-highlight) 80%, transparent); border-radius: .3rem; padding: 0 .18rem; }
+    .fact-block { border-color: color-mix(in oklab, var(--color-success) 25%, var(--color-border)); }
+    .quote-block { border-color: color-mix(in oklab, var(--color-blue) 25%, var(--color-border)); }
+    .note-block { border-color: color-mix(in oklab, var(--color-warning) 26%, var(--color-border)); background: color-mix(in oklab, var(--color-warning) 7%, var(--color-surface-2)); }
+    .source-block { border-style: dashed; }
+    .mention { color: var(--color-primary); font-weight: 700; }
+    .topic-comments { display:grid; gap:.85rem; }
+    .topic-comment-list { display:grid; gap:.7rem; }
+    .topic-comment { padding:.85rem; border-radius:var(--radius-md); background:var(--color-surface); border:1px solid var(--color-border); }
+    .topic-comment strong { display:block; margin-bottom:.2rem; font-size:var(--text-sm); }
+    .topic-comment span { color:var(--color-text-muted); font-size:var(--text-xs); }
+    .topic-comment-form { display:grid; gap:.65rem; }
+    .topic-comment-form textarea, .topic-comment-form select { width:100%; border:1px solid var(--color-border); background:var(--color-surface); border-radius:var(--radius-md); padding:.85rem .9rem; }
+    .export-panel { display:grid; gap:.75rem; border-color: color-mix(in oklab, var(--color-success) 20%, var(--color-border)); }
+    .export-row { display:flex; align-items:center; justify-content:space-between; gap:.8rem; flex-wrap:wrap; }
+    .pdf-badge { background: color-mix(in oklab, var(--color-error) 16%, var(--color-surface)); color: var(--color-error); }
+    .rightbar h2 { font-size: var(--text-lg); margin-bottom: var(--space-4); }
+    .side-tabs { display: grid; grid-template-columns: repeat(3,1fr); gap: .4rem; margin-bottom: var(--space-4); }
+    .side-tabs button { padding: .65rem .6rem; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid var(--color-border); font-size: var(--text-xs); }
+    .side-tabs button.active { background: var(--color-primary-highlight); color: var(--color-primary-hover); }
+    .thread { padding: 1rem; border-radius: var(--radius-lg); background: var(--color-surface-2); border: 1px solid var(--color-border); margin-bottom: .8rem; }
+    .thread-header { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .5rem; }
+    .thread-title { font-size: var(--text-sm); font-weight: 700; }
+    .thread p { color: var(--color-text-muted); font-size: var(--text-sm); margin-bottom: .65rem; }
+    .thread-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .mini { padding: .38rem .65rem; border-radius: var(--radius-md); background: var(--color-bg); border: 1px solid var(--color-border); font-size: var(--text-xs); }
+    .regional-news { margin-top: 1rem; }
+    .city-filter { display:flex; gap:.45rem; flex-wrap:wrap; margin-bottom:.8rem; }
+    .city-filter .pill.active { background:var(--color-primary-highlight); color:var(--color-primary-hover); }
+    .feed-item { padding: .9rem 0; border-bottom: 1px solid var(--color-divider); }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-item strong { display: block; margin-bottom: .2rem; font-size: var(--text-sm); }
+    .feed-item span { color: var(--color-text-muted); font-size: var(--text-xs); }
+    .feed-item .city { color: var(--color-gold); font-weight: 700; }
+    .presence { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+    .avatar { width: 28px; height: 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: var(--text-xs); color: white; font-weight: 700; }
+    .a1{background:#01696f}.a2{background:#964219}.a3{background:#006494}.a4{background:#7a39bb}.a5{background:#437a22}
+
+    .print-sheet { display:none; }
+    @media print {
+      body { background:#fff; color:#000; overflow: visible; }
+      .app { display:none !important; }
+      .print-sheet { display:block; padding:24mm 18mm; font-family: var(--font-body); }
+      .print-head { border-bottom:2px solid #0f4e54; padding-bottom:12px; margin-bottom:18px; }
+      .print-head h1 { font-size:22pt; line-height:1.2; margin-bottom:8px; }
+      .print-meta { font-size:10pt; color:#444; display:flex; gap:18px; flex-wrap:wrap; }
+      .print-status { margin-top:10px; font-size:10pt; font-weight:700; color:#1f5d2f; }
+      .print-block { margin-bottom:16px; page-break-inside: avoid; }
+      .print-block h2 { font-size:12pt; margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em; }
+      .print-block p, .print-block li { font-size:11pt; line-height:1.55; }
+      .print-note { padding:10px 12px; border:1px solid #c9c9c9; background:#f6f6f6; }
+      .print-comments { margin-top:18px; }
+      .print-comments li { margin-bottom:8px; }
+    }
+
+    @media (max-width: 1200px) {
+      .app { grid-template-columns: 84px minmax(0,1fr) 320px; }
+      .sidebar .nav-title, .sidebar .nav-label, .sidebar .saved-text, .logo strong, .sidebar .pill { display:none; }
+      .nav-item, .saved-view { justify-content:center; }
+    }
+    @media (max-width: 980px) {
+      html, body { overflow: auto; }
+      .app { display:block; height:auto; }
+      .sidebar, .rightbar, .main, .topbar, .statusbar { position:static; border:none; }
+      .sidebar, .main, .rightbar { padding: 1rem; }
+      .workspace, .kpis { grid-template-columns: 1fr; }
+      .topbar { display:grid; grid-template-columns: 1fr; }
+      .statusbar { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">
+        <svg viewBox="0 0 48 48" fill="none" aria-label="NERA logo">
+          <rect x="5" y="5" width="38" height="38" rx="10" stroke="currentColor" stroke-width="4"></rect>
+          <path d="M14 33V15L34 33V15" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <div>
+          <strong>NERA Desk</strong>
+          <div class="subtle">Федеральная редакция</div>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">Навигация</div>
+        <button class="nav-item active"><span class="nav-label">Редакционный стол</span><span class="pill">12</span></button>
+        <button class="nav-item"><span class="nav-label">Мои темы</span><span class="pill">5</span></button>
+        <button class="nav-item"><span class="nav-label">Лента РФ и СНГ</span><span class="pill">Live</span></button>
+        <button class="nav-item"><span class="nav-label">Согласование</span><span class="pill">3</span></button>
+        <button class="nav-item"><span class="nav-label">Архив версий</span></button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">Фильтры</div>
+        <button class="saved-view active"><span class="saved-text">Моя смена</span><span class="pill">Москва</span></button>
+        <button class="saved-view"><span class="saved-text">Отработано</span><span class="pill">6</span></button>
+        <button class="saved-view"><span class="saved-text">На эфир</span><span class="pill">19:00</span></button>
+        <button class="saved-view"><span class="saved-text">Нужна проверка</span><span class="pill">7</span></button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">Онлайн</div>
+        <div class="presence">
+          <span class="avatar a1">ИС</span>
+          <span class="avatar a2">АО</span>
+          <span class="avatar a3">МК</span>
+          <span class="avatar a4">ТП</span>
+          <span class="avatar a5">ЕД</span>
+        </div>
+      </div>
+    </aside>
+
+    <header class="topbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20L17 17"></path></svg>
+        <input type="text" value="Поиск по материалам, регионам, авторам и городам" aria-label="Поиск">
+      </div>
+      <div class="top-actions">
+        <button class="btn btn-secondary">Вид: Вечерний выпуск + СНГ</button>
+        <button class="icon-btn" aria-label="Уведомления">🔔</button>
+        <button class="theme-btn" data-theme-toggle aria-label="Переключить тему">☾</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="hero">
+        <div>
+          <h1>Облачная редакторская среда для региональных новостей</h1>
+          <p>В прототип добавлен экспорт отработанного материала в PDF через печатную версию документа: редактор может вывести в PDF только подготовленный и помеченный как завершенный материал, без лишних служебных панелей.</p>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary">Создать материал</button>
+          <button class="btn btn-secondary">Открыть diff</button>
+        </div>
+      </section>
+
+      <section class="kpis">
+        <article class="card kpi"><div class="label">В работе</div><div class="value">24</div><div class="meta">6 материалов отмечены как отработанные</div></article>
+        <article class="card kpi"><div class="label">На проверке</div><div class="value">8</div><div class="meta">2 требуют подтверждения цифр</div></article>
+        <article class="card kpi"><div class="label">Комментарии по теме</div><div class="value">13</div><div class="meta">4 открытых обсуждения по сюжету</div></article>
+        <article class="card kpi"><div class="label">PDF-экспорт</div><div class="value">Ready</div><div class="meta">печать в PDF доступна для отработанных материалов</div></article>
+      </section>
+
+      <section class="workspace">
+        <article class="card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Редакционный стол</div>
+              <div class="subtle">Отработанный материал отмечается цветом и может быть отправлен в PDF после финальной проверки</div>
+            </div>
+            <div class="presence">
+              <span class="pill">Мои темы</span>
+              <span class="pill">Москва</span>
+              <span class="pill">Экономика</span>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Заголовок</th>
+                  <th>Регион</th>
+                  <th>Тема</th>
+                  <th>Статус</th>
+                  <th>Маркер</th>
+                  <th>Дедлайн</th>
+                  <th>Ответственный</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Новый транспортный маршрут снизит нагрузку в часы пик</td>
+                  <td>Москва</td>
+                  <td>Инфраструктура</td>
+                  <td><span class="status review">На проверке</span></td>
+                  <td><button class="mark-done">Отметить как отработано</button></td>
+                  <td>18:20</td>
+                  <td>Ирина Смирнова</td>
+                </tr>
+                <tr class="row-done">
+                  <td>Готовность к вечернему выпуску по блоку экономики</td>
+                  <td>Федеральный</td>
+                  <td>Экономика</td>
+                  <td><span class="status done">Отработано</span></td>
+                  <td><button class="mark-done">Снять отметку</button></td>
+                  <td>19:00</td>
+                  <td>Татьяна Павлова</td>
+                </tr>
+                <tr>
+                  <td>Региональный штаб обновил данные по паводку</td>
+                  <td>Тюмень</td>
+                  <td>ЧС</td>
+                  <td><span class="status warning">Срочно</span></td>
+                  <td><button class="mark-done">Отметить как отработано</button></td>
+                  <td>18:05</td>
+                  <td>Олег Артемов</td>
+                </tr>
+                <tr class="row-done">
+                  <td>Новая программа поддержки врачей стартует в июле</td>
+                  <td>Самара</td>
+                  <td>Соцполитика</td>
+                  <td><span class="status success">Согласовано</span></td>
+                  <td><button class="mark-done">Снять отметку</button></td>
+                  <td>19:10</td>
+                  <td>Мария Котова</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card editor-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Карточка материала</div>
+              <div class="subtle">Rich-text, comments by selection, comments by topic, mentions и экспорт в PDF</div>
+            </div>
+            <button class="btn btn-secondary">История версий</button>
+          </div>
+          <div class="doc-meta">
+            <span class="pill">Москва</span>
+            <span class="pill">Инфраструктура</span>
+            <span class="pill">Приоритет: высокий</span>
+            <span class="pill">Ответственный: Ирина Смирнова</span>
+            <span class="pill">Дедлайн: 18:20</span>
+            <span class="pill pdf-badge">PDF export</span>
+          </div>
+          <div class="toolbar">
+            <button class="tool active">B</button>
+            <button class="tool">I</button>
+            <button class="tool">Список</button>
+            <button class="tool">Цитата</button>
+            <button class="tool active">Факт</button>
+            <button class="tool">Источник</button>
+            <button class="tool active">@ Mention</button>
+            <button class="tool active">Комментарий</button>
+            <button class="tool">Diff</button>
+          </div>
+          <div class="editor">
+            <div>
+              <div class="field-label">Headline</div>
+              <div class="headline" id="print-headline">В столице запущен новый маршрут, который должен разгрузить утренний трафик</div>
+            </div>
+            <div>
+              <div class="field-label">Lead</div>
+              <div class="lead" id="print-lead">Проект стартовал в тестовом режиме; окончательная оценка эффективности будет дана после анализа первой недели работы.</div>
+            </div>
+            <div>
+              <div class="field-label">Body</div>
+              <div class="paragraph" id="print-body">По данным городского департамента, новый маршрут охватывает три крупных пересадочных узла. <span class="selected">Это ключевой участок, который ранее давал максимальную нагрузку в часы пик.</span> <span class="mention">@Ирина Смирнова</span> проверь формулировку про трафик и уточни цифры у пресс-службы.</div>
+            </div>
+            <div class="fact-block" id="print-fact">
+              <div class="field-label">Fact block</div>
+              Интервал движения в утренние часы составляет 7 минут, в дневные — 10 минут. Блок помечен как подтвержденный редактором региона.
+            </div>
+            <div class="quote-block" id="print-quote">
+              <div class="field-label">Quote block</div>
+              «Мы ожидаем снижение нагрузки на перегруженные участки уже в течение первой недели», — сообщили в городской администрации.
+            </div>
+            <div class="source-block" id="print-source">
+              <div class="field-label">Source</div>
+              Источник: официальный релиз департамента транспорта, комментарий дежурной пресс-службы, внутренняя справка редакции.
+            </div>
+            <div class="note-block">
+              <div class="field-label">Editor note</div>
+              Внутренняя пометка: проверить, не дублируется ли эта новость с федеральным блоком на 19:00.
+            </div>
+            <div class="topic-comments">
+              <div class="field-label">Комментарии по теме</div>
+              <div class="topic-comment-list">
+                <div class="topic-comment">
+                  <strong>Тема: подача в выпуске 19:00</strong>
+                  <div class="subtle">Татьяна Павлова · 17:31</div>
+                  <p>Нужна более четкая привязка к вечернему федеральному блоку: почему это важно именно сегодня и как это влияет на пассажиропоток.</p>
+                </div>
+                <div class="topic-comment">
+                  <strong>Тема: подтверждение цифр</strong>
+                  <div class="subtle">Анна Орлова · 17:43</div>
+                  <p>До эфира нужно подтвердить интервал движения из второго источника, иначе блок оставить как предварительную оценку.</p>
+                </div>
+              </div>
+              <div class="topic-comment-form">
+                <select aria-label="Выбор темы комментария">
+                  <option>Подача в выпуске</option>
+                  <option>Проверка фактов</option>
+                  <option>Юридическая проверка</option>
+                  <option>Источники</option>
+                </select>
+                <textarea aria-label="Комментарий по теме">Добавить комментарий по общей теме материала, не привязанный к выделению текста.</textarea>
+                <div>
+                  <button class="btn btn-secondary">Сохранить комментарий по теме</button>
+                </div>
+              </div>
+            </div>
+            <div class="export-panel">
+              <div class="field-label">Экспорт отработанного материала</div>
+              <div class="export-row">
+                <div>
+                  <strong>PDF-версия для выпуска и архива</strong>
+                  <div class="subtle">Экспорт включает headline, lead, body, подтвержденные блоки и комментарии по теме; служебные панели интерфейса не печатаются.</div>
+                </div>
+                <button class="btn btn-success" id="exportPdfBtn">Экспорт в PDF</button>
+              </div>
+              <div class="subtle">Механика экспорта построена через печатную версию окна: в браузере откроется диалог печати, где можно выбрать “Сохранить как PDF”.</div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <aside class="rightbar">
+      <h2>Комментарии, активность и лента</h2>
+      <div class="side-tabs">
+        <button class="active">Треды</button>
+        <button>Темы</button>
+        <button>Лента</button>
+      </div>
+
+      <div class="thread">
+        <div class="thread-header">
+          <div class="thread-title">Тред #14 · выделение текста</div>
+          <span class="status review">Открыт</span>
+        </div>
+        <p>Уточнить, есть ли подтвержденные цифры по разгрузке трафика. В текущей формулировке звучит как прогноз.</p>
+        <div class="subtle">Анна Орлова · 17:42</div>
+        <div class="thread-actions" style="margin-top:.7rem;">
+          <button class="mini">Ответить</button>
+          <button class="mini">Resolve</button>
+        </div>
+      </div>
+
+      <div class="thread">
+        <div class="thread-header">
+          <div class="thread-title">Тема #3 · выпуск и подача</div>
+          <span class="status warning">Обсуждение</span>
+        </div>
+        <p>Комментарий по теме помогает обсуждать материал целиком, а не только отдельные выделенные фрагменты; это удобно для выпуска и маршрутной редакции [web:51].</p>
+        <div class="subtle">Татьяна Павлова · 17:31</div>
+        <div class="thread-actions" style="margin-top:.7rem;">
+          <button class="mini">Открыть тему</button>
+          <button class="mini">Назначить</button>
+        </div>
+      </div>
+
+      <div class="card regional-news" style="padding:1rem;">
+        <div class="panel-title" style="font-size:var(--text-sm); margin-bottom:.65rem;">Лента новостей по городам РФ и СНГ</div>
+        <div class="city-filter">
+          <span class="pill active">Москва</span>
+          <span class="pill">Санкт-Петербург</span>
+          <span class="pill">Минск</span>
+          <span class="pill">Алматы</span>
+          <span class="pill">Ташкент</span>
+          <span class="pill">Ереван</span>
+        </div>
+        <div class="feed-item"><strong><span class="city">Москва</span> · В столице перераспределяют транспортные потоки после запуска нового маршрута</strong><span>3 минуты назад · Инфраструктура</span></div>
+        <div class="feed-item"><strong><span class="city">Санкт-Петербург</span> · Городские службы сообщили об изменениях в движении на центральных магистралях</strong><span>7 минут назад · Город</span></div>
+        <div class="feed-item"><strong><span class="city">Минск</span> · Вечерний блок обновлен по экономической повестке и региональным перевозкам</strong><span>11 минут назад · Экономика</span></div>
+        <div class="feed-item"><strong><span class="city">Алматы</span> · Муниципальные службы представили сводку по транспортной нагрузке в часы пик</strong><span>15 минут назад · Город</span></div>
+        <div class="feed-item"><strong><span class="city">Ташкент</span> · В ленту добавлены данные о новых общественных маршрутах и пассажиропотоке</strong><span>19 минут назад · Инфраструктура</span></div>
+        <div class="feed-item"><strong><span class="city">Ереван</span> · Редакция обновила тему по городским перевозкам для международного блока СНГ</strong><span>24 минуты назад · СНГ</span></div>
+      </div>
+
+      <div class="card" style="padding:1rem; margin-top:1rem;">
+        <div class="panel-title" style="font-size:var(--text-sm); margin-bottom:.65rem;">Активность документа</div>
+        <div class="feed-item"><strong>Версия 23 создана</strong><span>17:48 · автосохранение</span></div>
+        <div class="feed-item"><strong>Статус изменен на “На проверке”</strong><span>17:39 · Татьяна Павлова</span></div>
+        <div class="feed-item"><strong>Материал готов к PDF-экспорту после подтверждения</strong><span>17:58 · workflow signal</span></div>
+      </div>
+    </aside>
+
+    <footer class="statusbar">
+      <span>Онлайн редакторы: 11</span>
+      <span>WebSocket: подключено</span>
+      <span>Совместное редактирование: активно</span>
+      <span>PDF export: enabled</span>
+    </footer>
+  </div>
+
+  <section class="print-sheet" id="printSheet">
+    <div class="print-head">
+      <h1 id="pdfTitle">В столице запущен новый маршрут, который должен разгрузить утренний трафик</h1>
+      <div class="print-meta">
+        <span>Регион: Москва</span>
+        <span>Тема: Инфраструктура</span>
+        <span>Ответственный: Ирина Смирнова</span>
+        <span>Дедлайн: 18:20</span>
+      </div>
+      <div class="print-status">Статус: Отработано / Готово к PDF-экспорту</div>
+    </div>
+
+    <div class="print-block">
+      <h2>Лид</h2>
+      <p id="pdfLead">Проект стартовал в тестовом режиме; окончательная оценка эффективности будет дана после анализа первой недели работы.</p>
+    </div>
+
+    <div class="print-block">
+      <h2>Основной текст</h2>
+      <p id="pdfBody">По данным городского департамента, новый маршрут охватывает три крупных пересадочных узла. Это ключевой участок, который ранее давал максимальную нагрузку в часы пик. @Ирина Смирнова проверь формулировку про трафик и уточни цифры у пресс-службы.</p>
+    </div>
+
+    <div class="print-block">
+      <h2>Подтвержденные факты</h2>
+      <div class="print-note" id="pdfFact">Интервал движения в утренние часы составляет 7 минут, в дневные — 10 минут. Блок помечен как подтвержденный редактором региона.</div>
+    </div>
+
+    <div class="print-block">
+      <h2>Цитата</h2>
+      <p id="pdfQuote">«Мы ожидаем снижение нагрузки на перегруженные участки уже в течение первой недели», — сообщили в городской администрации.</p>
+    </div>
+
+    <div class="print-block">
+      <h2>Источники</h2>
+      <p id="pdfSource">Источник: официальный релиз департамента транспорта, комментарий дежурной пресс-службы, внутренняя справка редакции.</p>
+    </div>
+
+    <div class="print-block print-comments">
+      <h2>Комментарии по теме</h2>
+      <ul>
+        <li>Подача в выпуске 19:00: нужна более четкая привязка к вечернему федеральному блоку.</li>
+        <li>Подтверждение цифр: требуется дополнительный источник перед выпуском.</li>
+      </ul>
+    </div>
+  </section>
+
+  <script>
+    (function(){
+      const btn = document.querySelector('[data-theme-toggle]');
+      const root = document.documentElement;
+      let theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      root.setAttribute('data-theme', theme);
+      btn.textContent = theme === 'dark' ? '☀' : '☾';
+      btn.addEventListener('click', () => {
+        theme = theme === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', theme);
+        btn.textContent = theme === 'dark' ? '☀' : '☾';
+      });
+
+      const exportBtn = document.getElementById('exportPdfBtn');
+      exportBtn.addEventListener('click', () => {
+        document.getElementById('pdfTitle').textContent = document.getElementById('print-headline').textContent.trim();
+        document.getElementById('pdfLead').textContent = document.getElementById('print-lead').textContent.trim();
+        document.getElementById('pdfBody').textContent = document.getElementById('print-body').textContent.replace(/\s+/g, ' ').trim();
+        document.getElementById('pdfFact').textContent = document.getElementById('print-fact').textContent.replace(/\s+/g, ' ').trim();
+        document.getElementById('pdfQuote').textContent = document.getElementById('print-quote').textContent.replace(/\s+/g, ' ').trim();
+        document.getElementById('pdfSource').textContent = document.getElementById('print-source').textContent.replace(/\s+/g, ' ').trim();
+        window.print();
+      });
+    })();
+  </script>
+</body>
+</html>
